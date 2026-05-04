@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SolarPro · Cotizador Fotovoltaico</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#F4F2ED;
+  --bg2:#ECEAE3;
+  --bg3:#E2DFD6;
+  --card:#FFFFFF;
+  --text:#1A1915;
+  --text2:#6B6860;
+  --text3:#9E9C97;
+  --accent:#2D6A4F;
+  --accent2:#40916C;
+  --accent-light:#D8F3DC;
+  --accent-text:#1B4332;
+  --warn:#B5451B;
+  --warn-light:#FDEBD0;
+  --info:#1A5276;
+  --info-light:#D6EAF8;
+  --border:#DDDBD4;
+  --border2:#CCCAC3;
+  --radius:12px;
+  --radius-sm:8px;
+  --shadow:0 1px 3px rgba(0,0,0,0.07),0 4px 16px rgba(0,0,0,0.05);
+  --font:'DM Sans',sans-serif;
+  --mono:'DM Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* ── HEADER ── */
+.header{background:var(--card);border-bottom:1px solid var(--border);padding:0 1.25rem;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px rgba(0,0,0,0.06)}
+.header-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:56px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.logo-icon svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2}
+.logo-text{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-0.3px}
+.logo-sub{font-size:11px;color:var(--text3);font-weight:400}
+.header-cta{background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font);transition:background .15s}
+.header-cta:hover{background:var(--accent2)}
+
+/* ── MAIN ── */
+.main{max-width:900px;margin:0 auto;padding:1.25rem}
+
+/* ── TABS ── */
+.tabs-wrap{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:6px;display:flex;gap:4px;margin-bottom:1.25rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs-wrap::-webkit-scrollbar{display:none}
+.tab{padding:8px 14px;font-size:13px;font-weight:500;border:none;background:none;color:var(--text2);border-radius:var(--radius-sm);cursor:pointer;white-space:nowrap;transition:all .15s;font-family:var(--font)}
+.tab:hover{background:var(--bg2);color:var(--text)}
+.tab.active{background:var(--accent);color:#fff}
+.tab .tab-icon{margin-right:5px;font-size:12px}
+
+/* ── SECTION ── */
+.section{display:none}.section.active{display:block}
+
+/* ── CARD ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--shadow)}
+.card-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:1rem}
+
+/* ── METRIC GRID ── */
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1rem}
+.metric{background:var(--bg2);border-radius:var(--radius-sm);padding:14px}
+.metric-label{font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:500}
+.metric-val{font-size:22px;font-weight:600;color:var(--text);letter-spacing:-0.5px}
+.metric-unit{font-size:12px;color:var(--text3);font-weight:400}
+.metric.green{background:var(--accent-light)}.metric.green .metric-val{color:var(--accent-text)}.metric.green .metric-label{color:var(--accent2)}
+.metric.blue{background:var(--info-light)}.metric.blue .metric-val{color:var(--info)}.metric.blue .metric-label{color:var(--info)}
+
+/* ── TABLE ── */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-weight:600;color:var(--text3);padding:8px 10px;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.tbl td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl input{width:100%;border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:13px;background:var(--bg);color:var(--text);font-family:var(--font)}
+.tbl input:focus{outline:none;border-color:var(--accent2)}
+.tbl-foot td{font-weight:600;background:var(--bg2);font-size:13px}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+/* ── FORM ELEMENTS ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-item{display:flex;flex-direction:column;gap:5px}
+.form-item.full{grid-column:1/-1}
+.form-item label{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em}
+.form-item input,.form-item select,.form-item textarea{border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px;background:var(--card);color:var(--text);font-family:var(--font);transition:border .15s}
+.form-item input:focus,.form-item select:focus,.form-item textarea:focus{outline:none;border-color:var(--accent2)}
+.form-item input.error,.form-item select.error{border-color:var(--warn)}
+.err-msg{font-size:11px;color:var(--warn);display:none}
+.hint{font-size:11px;color:var(--text3)}
+
+/* ── ADD ROW ── */
+.add-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
+.add-row input{border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px 10px;font-size:13px;background:var(--card);color:var(--text);font-family:var(--font)}
+.add-row input:focus{outline:none;border-color:var(--accent2)}
+
+/* ── BUTTONS ── */
+.btn{padding:9px 16px;font-size:13px;font-weight:500;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--card);color:var(--text);cursor:pointer;font-family:var(--font);transition:all .15s}
+.btn:hover{background:var(--bg2)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}.btn-primary:hover{background:var(--accent2);border-color:var(--accent2)}
+.btn-danger{color:var(--warn);border-color:transparent;background:none;padding:4px 8px;font-size:12px}.btn-danger:hover{background:var(--warn-light)}
+.btn-success{background:var(--accent);color:#fff;border-color:var(--accent);font-size:14px;padding:12px 24px;border-radius:var(--radius-sm);font-weight:600}.btn-success:hover{background:var(--accent2)}
+.btn-wa{background:#25D366;color:#fff;border-color:#25D366;display:flex;align-items:center;gap:8px}.btn-wa:hover{background:#1ebe5d}
+
+/* ── FORMULA BLOCK ── */
+.formula{background:var(--bg2);border-left:3px solid var(--accent2);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:10px 14px;margin:5px 0;font-size:13px;color:var(--text2);line-height:1.6}
+.formula span{color:var(--accent);font-weight:600;font-family:var(--mono)}
+
+/* ── PARAMS ── */
+.param-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.param-item label{font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+.param-item input,.param-item select{width:100%;border:1px solid var(--border2);border-radius:var(--radius-sm);padding:9px 12px;font-size:14px;background:var(--card);color:var(--text);font-family:var(--font)}
+.param-item input:focus{outline:none;border-color:var(--accent2)}
+
+/* ── PRICE TABLE ── */
+.price-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.price-tbl th{text-align:left;font-weight:600;color:var(--text3);padding:8px 10px;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.price-tbl td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.price-tbl tr:last-child td{border-bottom:none}
+.price-tbl input{width:85px;border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:13px;text-align:right;background:var(--bg);color:var(--text);font-family:var(--mono)}
+.price-tbl input:focus{outline:none;border-color:var(--accent2)}
+.price-foot td{font-weight:600;background:var(--bg2)}
+.price-foot.total td{font-size:15px;background:var(--accent-light);color:var(--accent-text)}
+
+/* ── RESUMEN COTIZACIÓN ── */
+.resumen{background:var(--bg2);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1rem}
+.resumen-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:14px}
+.resumen-row:last-child{border-bottom:none;font-weight:600;font-size:16px;padding-top:10px}
+.resumen-row .rl{color:var(--text2)}
+.resumen-row .rv{font-weight:600;color:var(--text)}
+.resumen-row:last-child .rv{color:var(--accent)}
+
+/* ── SUCCESS ── */
+.success-box{text-align:center;padding:2rem 1rem}
+.success-icon{width:60px;height:60px;border-radius:50%;background:var(--accent-light);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:26px}
+.success-box h3{font-size:20px;font-weight:600;margin-bottom:8px;letter-spacing:-0.3px}
+.success-box p{font-size:14px;color:var(--text2);line-height:1.7;max-width:420px;margin:0 auto 1.5rem}
+.cot-id{display:inline-block;font-family:var(--mono);font-size:14px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px 18px;margin-bottom:1.5rem;letter-spacing:.05em}
+.next-steps{text-align:left;max-width:380px;margin:0 auto 1.5rem;display:flex;flex-direction:column;gap:8px}
+.next-step{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--text2)}
+.next-step-num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;margin-top:1px}
+
+/* ── CHART ── */
+.chart-wrap{position:relative;width:100%;height:220px;margin:1rem 0}
+
+/* ── INFO BOX ── */
+.info-box{background:var(--info-light);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--info);line-height:1.6;margin-bottom:1rem}
+.warn-box-s{background:var(--warn-light);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--warn);line-height:1.6;margin-top:8px}
+.disclaimer{font-size:11px;color:var(--text3);margin-top:10px;line-height:1.6;border-top:1px solid var(--border);padding-top:10px}
+
+/* ── SCENARIO ── */
+.sc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sc-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem}
+.sc-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.sc-result{background:var(--bg2);border-radius:var(--radius-sm);padding:10px 12px;margin-top:10px;font-size:12px}
+.sc-mini{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sc-mini-item .sc-lbl{color:var(--text3);font-size:11px;margin-bottom:2px}
+.sc-mini-item .sc-val{font-size:16px;font-weight:600;color:var(--text)}
+.saving{font-size:11px;color:var(--accent);margin-top:8px;font-weight:500}
+
+/* ── SPINNER ── */
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── RESPONSIVE MOBILE ── */
+@media(max-width:600px){
+  .header-inner{height:52px}
+  .logo-sub{display:none}
+  .header-cta{padding:7px 12px;font-size:12px}
+  .main{padding:.75rem}
+  .tabs-wrap{padding:5px;gap:3px}
+  .tab{padding:7px 10px;font-size:12px}
+  .tab .tab-icon{display:none}
+  .card{padding:1rem}
+  .metric-grid{grid-template-columns:repeat(2,1fr)}
+  .metric-val{font-size:18px}
+  .form-grid{grid-template-columns:1fr}
+  .form-item.full{grid-column:1}
+  .param-grid{grid-template-columns:1fr}
+  .sc-grid{grid-template-columns:1fr}
+  .add-row{gap:6px}
+  .add-row input{font-size:12px;padding:7px 8px}
+  .tbl{font-size:12px}
+  .tbl th,.tbl td{padding:6px 6px}
+  .price-tbl{font-size:12px}
+  .price-tbl th,.price-tbl td{padding:7px 8px}
+  .btn-success{width:100%;text-align:center;justify-content:center}
+  .btn-wa{width:100%;justify-content:center}
+  .resumen-row{font-size:13px}
+  .success-box{padding:1.5rem .5rem}
+  .chart-wrap{height:180px}
+  .formula{font-size:12px}
+}
+@media(max-width:380px){
+  .metric-grid{grid-template-columns:1fr 1fr}
+  .tab{padding:6px 8px;font-size:11px}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      </div>
+      <div>
+        <div class="logo-text">SolarPro</div>
+        <div class="logo-sub">Cotizador fotovoltaico</div>
+      </div>
+    </div>
+    <button class="header-cta" onclick="switchTab('contacto',6)">Solicitar cotización</button>
+  </div>
+</header>
+
+<main class="main">
+  <div class="tabs-wrap">
+    <button class="tab active" onclick="switchTab('cargas',0)"><span class="tab-icon">⚡</span>Mis equipos</button>
+    <button class="tab" onclick="switchTab('parametros',1)"><span class="tab-icon">⚙</span>Configuración</button>
+    <button class="tab" onclick="switchTab('resultados',2)"><span class="tab-icon">📐</span>Dimensionamiento</button>
+    <button class="tab" onclick="switchTab('presupuesto',3)"><span class="tab-icon">💰</span>Presupuesto</button>
+    <button class="tab" onclick="switchTab('escenarios',4)"><span class="tab-icon">🔀</span>Escenarios</button>
+    <button class="tab" onclick="switchTab('contacto',5)"><span class="tab-icon">📋</span>Cotización</button>
+  </div>
+
+  <!-- TAB 1: MIS EQUIPOS -->
+  <div id="tab-cargas" class="section active">
+    <div class="card">
+      <div class="card-title">Equipos a respaldar con energía solar</div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th>Equipo</th><th>Potencia (W)</th><th>Horas/día</th>
+            <th>Consumo kWh/d</th><th>Tensión (V)</th><th></th>
+          </tr></thead>
+          <tbody id="loads-body"></tbody>
+          <tfoot><tr class="tbl-foot">
+            <td>Total</td><td id="total-w">—</td><td>—</td>
+            <td id="total-kwh">—</td><td>—</td><td></td>
+          </tr></tfoot>
+        </table>
+      </div>
+      <div class="add-row">
+        <input id="new-name" placeholder="Nombre del equipo" style="flex:1;min-width:120px"/>
+        <input id="new-w" type="number" placeholder="Watts" style="width:80px"/>
+        <input id="new-h" type="number" placeholder="Horas" style="width:75px"/>
+        <input id="new-v" type="number" placeholder="V" style="width:65px" value="120"/>
+        <button class="btn btn-primary" onclick="addLoad()">+ Agregar</button>
+      </div>
+    </div>
+    <div class="metric-grid" id="summary-metrics"></div>
+    <div style="text-align:right">
+      <button class="btn btn-success" onclick="switchTab('contacto',5)">Solicitar cotización →</button>
+    </div>
+  </div>
+
+  <!-- TAB 2: CONFIGURACIÓN -->
+  <div id="tab-parametros" class="section">
+    <div class="card">
+      <div class="card-title">Radiación solar del sitio</div>
+      <div class="param-grid">
+        <div class="param-item">
+          <label>Horas solar pico promedio (HSP)</label>
+          <input id="p-hsp" type="number" value="5.2" step="0.1" min="2" max="9" oninput="calcAll()"/>
+        </div>
+        <div class="param-item">
+          <label>Horas de autonomía requeridas</label>
+          <input id="p-aut" type="number" value="12" step="1" min="4" max="48" oninput="calcAll()"/>
+        </div>
+      </div>
+      <div class="info-box" style="margin-top:12px">Para <strong>Lechería, Anzoátegui</strong> el promedio anual es <strong>5.2 h</strong> (peor mes noviembre: 4.64 h). Para otras ciudades de Venezuela oscila entre 4.5 y 6.0 h.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Parámetros técnicos</div>
+      <div class="param-grid">
+        <div class="param-item"><label>Eficiencia general (η)</label><input id="p-eta" type="number" value="0.85" step="0.01" min="0.5" max="1" oninput="calcAll()"/></div>
+        <div class="param-item"><label>Profundidad descarga (DOD)</label><input id="p-dod" type="number" value="0.8" step="0.01" min="0.5" max="1" oninput="calcAll()"/></div>
+        <div class="param-item"><label>Voltaje bus DC (V)</label><input id="p-vbus" type="number" value="48" step="12" min="12" max="96" oninput="calcAll()"/></div>
+        <div class="param-item"><label>Potencia por panel (Wp)</label><input id="p-panel" type="number" value="550" step="50" min="100" max="800" oninput="calcAll()"/></div>
+        <div class="param-item"><label>Factor seguridad inversor</label><input id="p-fseg" type="number" value="1.25" step="0.05" min="1" max="2" oninput="calcAll()"/></div>
+        <div class="param-item"><label>Capacidad rack batería (kWh)</label><input id="p-rack" type="number" value="5" step="0.5" min="1" max="20" oninput="calcAll()"/></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: DIMENSIONAMIENTO -->
+  <div id="tab-resultados" class="section">
+    <div class="metric-grid" id="result-metrics"></div>
+    <div class="card">
+      <div class="card-title">Secuencia de cálculo</div>
+      <div id="calc-steps"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Especificaciones técnicas</div>
+      <div class="tbl-wrap">
+        <table class="tbl"><thead><tr><th>Componente</th><th>Valor requerido</th><th>Observación</th></tr></thead>
+        <tbody id="spec-table"></tbody></table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Consumo diario por equipo</div>
+      <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- TAB 4: PRESUPUESTO -->
+  <div id="tab-presupuesto" class="section">
+    <div class="metric-grid" id="budget-summary"></div>
+    <div class="card">
+      <div class="card-title">Desglose de equipos y costos (USD)</div>
+      <div class="tbl-wrap">
+        <table class="price-tbl">
+          <thead><tr><th>Componente</th><th>Cant.</th><th>Precio unit.</th><th>Subtotal</th><th>Referencia</th></tr></thead>
+          <tbody id="price-body"></tbody>
+          <tfoot>
+            <tr class="price-foot"><td colspan="3">Subtotal equipos</td><td id="subtotal-equip">—</td><td></td></tr>
+            <tr class="price-foot"><td colspan="3" style="font-weight:400;font-size:12px;color:var(--text3)">Instalación y mano de obra (15%)</td><td id="costo-inst">—</td><td></td></tr>
+            <tr class="price-foot total"><td colspan="3">Total estimado del proyecto</td><td id="total-proy">—</td><td></td></tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="disclaimer">* Precios referenciales mercado venezolano 2025 (Vitron Energy, Growatt, Pylontech). Pueden variar según disponibilidad y tipo de cambio.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Distribución del presupuesto</div>
+      <div id="legend-pie" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px;font-size:12px;color:var(--text2)"></div>
+      <div class="chart-wrap" style="height:230px"><canvas id="pieChart"></canvas></div>
+    </div>
+    <div style="text-align:right;margin-top:4px">
+      <button class="btn btn-success" onclick="switchTab('contacto',5)">Solicitar cotización formal →</button>
+    </div>
+  </div>
+
+  <!-- TAB 5: ESCENARIOS -->
+  <div id="tab-escenarios" class="section">
+    <div class="info-box">Compara cómo cambia el sistema y el costo si ajustas el equipo de mayor consumo (A/A).</div>
+    <div class="sc-grid" id="sc-wrap"></div>
+    <div class="card" style="margin-top:1rem">
+      <div class="card-title">Comparación visual</div>
+      <div id="legend-compare" style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px;font-size:12px;color:var(--text2)"></div>
+      <div class="chart-wrap" style="height:250px"><canvas id="compareChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- TAB 6: COTIZACIÓN -->
+  <div id="tab-contacto" class="section">
+    <div id="form-view">
+      <div class="card">
+        <div class="card-title">Resumen de tu estimación</div>
+        <div class="resumen" id="resumen-cot"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Tus datos de contacto</div>
+        <div class="form-grid">
+          <div class="form-item">
+            <label>Nombre completo *</label>
+            <input id="f-nombre" type="text" placeholder="Ej: Juan Pérez"/>
+            <span class="err-msg" id="err-nombre">Campo obligatorio</span>
+          </div>
+          <div class="form-item">
+            <label>Teléfono / WhatsApp *</label>
+            <input id="f-telefono" type="tel" placeholder="+58 412 000 0000"/>
+            <span class="err-msg" id="err-telefono">Ingresa un número válido</span>
+          </div>
+          <div class="form-item">
+            <label>Correo electrónico</label>
+            <input id="f-email" type="email" placeholder="correo@ejemplo.com"/>
+            <span class="hint">Opcional — para enviarte el resumen</span>
+          </div>
+          <div class="form-item">
+            <label>Ciudad / Estado *</label>
+            <input id="f-ciudad" type="text" placeholder="Ej: Lechería, Anzoátegui"/>
+            <span class="err-msg" id="err-ciudad">Indica tu ciudad</span>
+          </div>
+          <div class="form-item full">
+            <label>Dirección o referencia</label>
+            <input id="f-direccion" type="text" placeholder="Urb. Villas Lechería, calle 3, casa 12"/>
+          </div>
+          <div class="form-item">
+            <label>Tipo de instalación *</label>
+            <select id="f-tipo">
+              <option value="">Seleccionar…</option>
+              <option value="Residencial">Residencial</option>
+              <option value="Comercial">Comercial</option>
+              <option value="Industrial">Industrial / Industrial liviano</option>
+              <option value="Médico / Crítico">Equipos médicos / críticos</option>
+              <option value="Otro">Otro</option>
+            </select>
+            <span class="err-msg" id="err-tipo">Selecciona un tipo</span>
+          </div>
+          <div class="form-item">
+            <label>¿Tienes planta eléctrica?</label>
+            <select id="f-planta">
+              <option value="Sí">Sí, tengo planta</option>
+              <option value="No">No tengo planta</option>
+              <option value="En proyecto">La tengo en proyecto</option>
+            </select>
+          </div>
+          <div class="form-item full">
+            <label>Observaciones o requerimientos especiales</label>
+            <textarea id="f-notas" rows="3" placeholder="Ej: continuidad 24h, techo inclinado, interés en financiamiento…"></textarea>
+          </div>
+          <div class="form-item full">
+            <label style="display:flex;align-items:flex-start;gap:8px;text-transform:none;letter-spacing:0;font-weight:400;font-size:13px;cursor:pointer">
+              <input id="f-terminos" type="checkbox" style="width:auto;margin-top:2px;accent-color:var(--accent)"/>
+              Acepto que mis datos sean usados para contactarme con una cotización. No se compartirán con terceros.
+            </label>
+            <span class="err-msg" id="err-terminos">Debes aceptar para continuar</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:1.25rem;flex-wrap:wrap">
+          <button class="btn btn-success" id="submit-btn" onclick="submitForm()">Enviar solicitud</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÉXITO -->
+    <div id="success-view" style="display:none">
+      <div class="card">
+        <div class="success-box">
+          <div class="success-icon">✓</div>
+          <h3>¡Solicitud enviada!</h3>
+          <p>Hemos recibido tu información. Un asesor revisará tu estimación y se pondrá en contacto en las próximas <strong>24–48 horas</strong>.</p>
+          <div class="cot-id" id="cot-id-display">COT-0000</div>
+          <div class="next-steps">
+            <div class="next-step"><div class="next-step-num">1</div><div><strong>Revisión técnica</strong> — validamos tu inventario y dimensionamiento</div></div>
+            <div class="next-step"><div class="next-step-num">2</div><div><strong>Propuesta formal</strong> — recibes presupuesto con marcas y garantías</div></div>
+            <div class="next-step"><div class="next-step-num">3</div><div><strong>Visita técnica</strong> — inspección en sitio sin costo</div></div>
+            <div class="next-step"><div class="next-step-num">4</div><div><strong>Instalación</strong> — con tu aprobación ejecutamos el proyecto</div></div>
+          </div>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+            <button class="btn btn-wa" id="wa-btn" onclick="openWhatsApp()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.117 1.523 5.847L.057 23.885a.5.5 0 00.609.61l6.044-1.585A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.371l-.358-.214-3.724.976.997-3.635-.234-.374A9.818 9.818 0 1112 21.818z"/></svg>
+              Escribir por WhatsApp
+            </button>
+            <button class="btn" onclick="reiniciar()">Nueva estimación</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyKG-4aDol4VCXx_QjjgsRPK-HicrZnC0tAWSccsDBMl94D7-I2bI5xcu27FyIMdMp9/exec";
+const WA_NUMBER  = "584248283470"; // ej: 584121234567
+
+let loads=[
+  {name:'Iluminación de emergencia',w:150,h:24,v:120},
+  {name:'Toma corriente continuo',w:200,h:24,v:120},
+  {name:'Concentrador de oxígeno 10L',w:650,h:16,v:120},
+  {name:'Monitor de signos vitales',w:150,h:20,v:120},
+  {name:'Aire acondicionado 12,000 BTU',w:1500,h:24,v:208},
+  {name:'TV, internet y entretenimiento',w:500,h:24,v:120},
+];
+let unitPrices={panel:180,bateria:950,inversor:2200,estructura:400,cableado:350,protecciones:280};
+let barChart=null,pieChart=null,compareChart=null;
+let lastCotId='';
+
+function gP(id){return parseFloat(document.getElementById(id)?.value)||0}
+
+function calcSystem(arr){
+  const eta=gP('p-eta'),dod=gP('p-dod'),vbus=gP('p-vbus');
+  const aut=gP('p-aut'),pWp=gP('p-panel'),fseg=gP('p-fseg');
+  const rack=gP('p-rack'),hsp=gP('p-hsp');
+  const Ed=arr.reduce((s,l)=>s+(l.w*l.h/1000),0);
+  const Pmax=arr.reduce((s,l)=>s+l.w,0)/1000;
+  const Ereq=Ed/eta;
+  const PpFV=Ereq/hsp;
+  const nPanels=Math.ceil(PpFV/(pWp/1000));
+  const Ptotal=nPanels*pWp/1000;
+  const Eresp=Ed*(aut/24);
+  const CbatKwh=Eresp/dod;
+  const CbatAh=(Eresp*1000)/(dod*vbus*0.95);
+  const nRacks=Math.ceil(CbatKwh/rack);
+  const Pinv=Pmax*fseg;
+  const nInv=Math.ceil(Pinv/4);
+  return{Ed,Pmax,Ereq,PpFV,nPanels,Ptotal,Eresp,CbatKwh,CbatAh,nRacks,Pinv,nInv,hsp,aut,dod,vbus,rack,pWp,fseg,eta};
+}
+
+function calcBudget(R){
+  const items=[
+    {label:`Panel solar ${R.pWp}Wp`,qty:R.nPanels,key:'panel',ref:'Growatt / Jinko / Canadian Solar'},
+    {label:`Rack batería LiFePO4 (${gP('p-rack')} kWh)`,qty:R.nRacks,key:'bateria',ref:'Vitron Energy / Pylontech'},
+    {label:`Inversor híbrido ≥${Math.ceil(R.Pinv*10)/10}kW`,qty:R.nInv,key:'inversor',ref:'Victron / Growatt SPH'},
+    {label:'Estructura y montaje',qty:1,key:'estructura',ref:'Techo o suelo'},
+    {label:'Cableado DC/AC y ductos',qty:1,key:'cableado',ref:'Conductores TTW/THW'},
+    {label:'Protecciones y tablero',qty:1,key:'protecciones',ref:'Breakers, fusibles, ATS'},
+  ];
+  const subtotal=items.reduce((s,it)=>s+(unitPrices[it.key]||0)*it.qty,0);
+  const inst=subtotal*0.15;
+  return{items,subtotal,inst,total:subtotal+inst};
+}
+
+function calcAll(){
+  renderLoads();
+  renderSummary();
+  const at=document.querySelector('.section.active')?.id;
+  if(at==='tab-resultados') renderResults();
+  if(at==='tab-presupuesto') renderBudget();
+  if(at==='tab-escenarios') renderScenarios();
+  if(at==='tab-contacto') renderResumen();
+}
+
+function renderLoads(){
+  const tb=document.getElementById('loads-body');
+  tb.innerHTML='';
+  loads.forEach((l,i)=>{
+    const kwh=(l.w*l.h/1000).toFixed(2);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><input value="${l.name}" onchange="loads[${i}].name=this.value;calcAll()"/></td>
+      <td><input type="number" value="${l.w}" onchange="loads[${i}].w=+this.value;calcAll()"/></td>
+      <td><input type="number" value="${l.h}" min="0" max="24" onchange="loads[${i}].h=+this.value;calcAll()"/></td>
+      <td style="text-align:center;color:var(--text2)">${kwh}</td>
+      <td><input type="number" value="${l.v}" onchange="loads[${i}].v=+this.value;calcAll()"/></td>
+      <td><button class="btn btn-danger" onclick="loads.splice(${i},1);calcAll()">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+  document.getElementById('total-w').textContent=loads.reduce((s,l)=>s+l.w,0).toFixed(0)+' W';
+  document.getElementById('total-kwh').textContent=loads.reduce((s,l)=>s+(l.w*l.h/1000),0).toFixed(2)+' kWh';
+}
+
+function renderSummary(){
+  const Ed=loads.reduce((s,l)=>s+(l.w*l.h/1000),0);
+  const Pm=loads.reduce((s,l)=>s+l.w,0)/1000;
+  document.getElementById('summary-metrics').innerHTML=`
+    <div class="metric green"><div class="metric-label">Potencia instalada</div><div class="metric-val">${Pm.toFixed(2)} <span class="metric-unit">kW</span></div></div>
+    <div class="metric green"><div class="metric-label">Consumo diario</div><div class="metric-val">${Ed.toFixed(1)} <span class="metric-unit">kWh/día</span></div></div>
+    <div class="metric"><div class="metric-label">Equipos</div><div class="metric-val">${loads.length}</div></div>`;
+}
+
+function renderResults(){
+  const R=calcSystem(loads);
+  document.getElementById('result-metrics').innerHTML=`
+    <div class="metric green"><div class="metric-label">Potencia FV total</div><div class="metric-val">${R.Ptotal.toFixed(2)} <span class="metric-unit">kWp</span></div></div>
+    <div class="metric green"><div class="metric-label">Paneles solares</div><div class="metric-val">${R.nPanels} <span class="metric-unit">uds</span></div></div>
+    <div class="metric green"><div class="metric-label">Banco baterías</div><div class="metric-val">${R.CbatKwh.toFixed(1)} <span class="metric-unit">kWh</span></div></div>
+    <div class="metric green"><div class="metric-label">Racks baterías</div><div class="metric-val">${R.nRacks} <span class="metric-unit">racks</span></div></div>
+    <div class="metric"><div class="metric-label">Capacidad Ah</div><div class="metric-val">${Math.round(R.CbatAh)} <span class="metric-unit">Ah@${R.vbus}V</span></div></div>
+    <div class="metric"><div class="metric-label">Inversor mínimo</div><div class="metric-val">${R.Pinv.toFixed(2)} <span class="metric-unit">kW</span></div></div>`;
+  document.getElementById('calc-steps').innerHTML=`
+    <div class="formula">1. Energía diaria: Ed = <span>${R.Ed.toFixed(2)} kWh/día</span></div>
+    <div class="formula">2. Energía requerida DC: Ereq = ${R.Ed.toFixed(2)} / ${R.eta} = <span>${R.Ereq.toFixed(2)} kWh/día</span></div>
+    <div class="formula">3. HSP promedio: <span>${R.hsp} h</span> → Potencia pico FV: <span>${R.PpFV.toFixed(2)} kWp</span></div>
+    <div class="formula">4. Paneles (${R.pWp}Wp): N = ⌈${R.PpFV.toFixed(2)} / ${(R.pWp/1000).toFixed(3)}⌉ = <span>${R.nPanels} → ${R.Ptotal.toFixed(2)} kWp</span></div>
+    <div class="formula">5. Energía respaldo (${R.aut}h): <span>${R.Eresp.toFixed(2)} kWh</span></div>
+    <div class="formula">6. Banco baterías: <span>${R.CbatKwh.toFixed(2)} kWh / ${Math.round(R.CbatAh)} Ah @ ${R.vbus}V → ${R.nRacks} racks</span></div>
+    <div class="formula">7. Inversor: ${R.Pmax.toFixed(2)} × ${R.fseg} = <span>≥ ${Math.ceil(R.Pinv*10)/10} kW</span></div>`;
+  document.getElementById('spec-table').innerHTML=`
+    <tr><td>Paneles solares</td><td><strong>${R.nPanels} × ${R.pWp} Wp = ${R.Ptotal.toFixed(2)} kWp</strong></td><td>HSP ${R.hsp} h/día</td></tr>
+    <tr><td>Banco de baterías</td><td><strong>${R.CbatKwh.toFixed(1)} kWh / ${Math.round(R.CbatAh)} Ah</strong></td><td>${R.aut}h autonomía @ ${R.vbus}V</td></tr>
+    <tr><td>Racks de baterías</td><td><strong>${R.nRacks} racks (${gP('p-rack')} kWh c/u)</strong></td><td>LiFePO4 recomendado</td></tr>
+    <tr><td>Inversor híbrido</td><td><strong>≥ ${Math.ceil(R.Pinv*10)/10} kW continuo</strong></td><td>Onda sinusoidal pura</td></tr>`;
+  if(barChart) barChart.destroy();
+  barChart=new Chart(document.getElementById('barChart'),{
+    type:'bar',
+    data:{
+      labels:loads.map(l=>l.name.length>20?l.name.slice(0,18)+'…':l.name),
+      datasets:[{label:'kWh/día',data:loads.map(l=>parseFloat((l.w*l.h/1000).toFixed(2))),backgroundColor:'#2D6A4F',borderRadius:6}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{font:{size:11},autoSkip:false,maxRotation:30},grid:{display:false}},y:{ticks:{font:{size:11}}}}}
+  });
+}
+
+function renderBudget(){
+  const R=calcSystem(loads);
+  const B=calcBudget(R);
+  document.getElementById('budget-summary').innerHTML=`
+    <div class="metric green"><div class="metric-label">Total estimado</div><div class="metric-val">$${Math.round(B.total).toLocaleString()} <span class="metric-unit">USD</span></div></div>
+    <div class="metric"><div class="metric-label">Solo equipos</div><div class="metric-val">$${B.subtotal.toLocaleString()} <span class="metric-unit">USD</span></div></div>
+    <div class="metric"><div class="metric-label">Instalación (15%)</div><div class="metric-val">$${Math.round(B.inst).toLocaleString()} <span class="metric-unit">USD</span></div></div>`;
+  const tb=document.getElementById('price-body');
+  tb.innerHTML='';
+  B.items.forEach(it=>{
+    const up=unitPrices[it.key]||0,st=up*it.qty;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${it.label}</td><td style="text-align:center">${it.qty}</td>
+      <td><input type="number" value="${up}" min="0" step="10" onchange="unitPrices['${it.key}']=+this.value;renderBudget()"/></td>
+      <td style="font-weight:600">$${st.toLocaleString()}</td>
+      <td style="font-size:11px;color:var(--text3)">${it.ref}</td>`;
+    tb.appendChild(tr);
+  });
+  document.getElementById('subtotal-equip').textContent='$'+B.subtotal.toLocaleString();
+  document.getElementById('costo-inst').textContent='$'+Math.round(B.inst).toLocaleString();
+  document.getElementById('total-proy').textContent='$'+Math.round(B.total).toLocaleString();
+  const cols=['#2D6A4F','#40916C','#B5451B','#1A5276','#6B4226','#555249'];
+  const pLabels=B.items.map(it=>it.label.split(' ').slice(0,3).join(' '));
+  const pData=B.items.map(it=>(unitPrices[it.key]||0)*it.qty);
+  document.getElementById('legend-pie').innerHTML=pLabels.map((l,i)=>`<span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:${cols[i]};flex-shrink:0"></span>${l} — $${pData[i].toLocaleString()}</span>`).join('');
+  if(pieChart) pieChart.destroy();
+  pieChart=new Chart(document.getElementById('pieChart'),{
+    type:'doughnut',
+    data:{labels:pLabels,datasets:[{data:pData,backgroundColor:cols,borderWidth:0,hoverOffset:6}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}
+  });
+}
+
+function renderResumen(){
+  const R=calcSystem(loads);
+  const B=calcBudget(R);
+  document.getElementById('resumen-cot').innerHTML=`
+    <div class="resumen-row"><span class="rl">Equipos registrados</span><span class="rv">${loads.length} equipos · ${R.Ed.toFixed(1)} kWh/día</span></div>
+    <div class="resumen-row"><span class="rl">Paneles solares</span><span class="rv">${R.nPanels} × ${R.pWp} Wp = ${R.Ptotal.toFixed(2)} kWp</span></div>
+    <div class="resumen-row"><span class="rl">Banco de baterías</span><span class="rv">${R.CbatKwh.toFixed(1)} kWh · ${R.nRacks} racks (${R.aut}h autonomía)</span></div>
+    <div class="resumen-row"><span class="rl">Inversor híbrido</span><span class="rv">≥ ${Math.ceil(R.Pinv*10)/10} kW</span></div>
+    <div class="resumen-row"><span class="rl">Inversión estimada</span><span class="rv">$${Math.round(B.total).toLocaleString()} USD</span></div>`;
+}
+
+let scenarios=[
+  {label:'Escenario A — Sin A/A',removeAA:true,scaleAA:null},
+  {label:'Escenario B — A/A al 50%',removeAA:false,scaleAA:0.5},
+];
+
+function calcSc(sc){
+  let ls=loads.map(l=>({...l}));
+  const idx=ls.findIndex(l=>l.name.toLowerCase().includes('aire')||l.name.toLowerCase().includes('a/a'));
+  if(idx>=0){
+    if(sc.removeAA) ls.splice(idx,1);
+    else if(sc.scaleAA) ls[idx]={...ls[idx],w:Math.round(ls[idx].w*sc.scaleAA)};
+  }
+  return calcSystem(ls);
+}
+
+function renderScenarios(){
+  const R0=calcSystem(loads);
+  const B0=calcBudget(R0);
+  document.getElementById('sc-wrap').innerHTML=scenarios.map(sc=>{
+    const R=calcSc(sc);
+    const B=calcBudget(R);
+    const savP=R0.nPanels-R.nPanels,savR=R0.nRacks-R.nRacks;
+    const savCost=Math.round(B0.total-B.total);
+    return`<div class="sc-card"><div class="sc-label">${sc.label}</div>
+      <div class="sc-result"><div class="sc-mini">
+        <div class="sc-mini-item"><div class="sc-lbl">Ed</div><div class="sc-val">${R.Ed.toFixed(1)} kWh</div></div>
+        <div class="sc-mini-item"><div class="sc-lbl">Paneles</div><div class="sc-val">${R.nPanels}</div></div>
+        <div class="sc-mini-item"><div class="sc-lbl">Baterías</div><div class="sc-val">${R.CbatKwh.toFixed(1)} kWh</div></div>
+        <div class="sc-mini-item"><div class="sc-lbl">Total USD</div><div class="sc-val">$${Math.round(B.total).toLocaleString()}</div></div>
+      </div>
+      ${savCost>0?`<div class="saving">↓ ${savP} paneles · ${savR} racks · ahorro ~$${savCost.toLocaleString()} USD</div>`:''}</div></div>`;
+  }).join('');
+  const cols=['#2D6A4F','#40916C','#B5451B'];
+  const labels=['Ed (kWh/d)','Paneles','Baterías (kWh)','Racks'];
+  const datasets=[
+    {label:'Base',data:[R0.Ed,R0.nPanels,R0.CbatKwh,R0.nRacks].map(v=>+v.toFixed(1)),backgroundColor:cols[0],borderRadius:5},
+    ...scenarios.map((sc,i)=>{const R=calcSc(sc);return{label:sc.label,data:[R.Ed,R.nPanels,R.CbatKwh,R.nRacks].map(v=>+v.toFixed(1)),backgroundColor:cols[i+1],borderRadius:5};})
+  ];
+  document.getElementById('legend-compare').innerHTML=datasets.map((d,i)=>`<span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:${cols[i]}"></span>${d.label}</span>`).join('');
+  if(compareChart) compareChart.destroy();
+  compareChart=new Chart(document.getElementById('compareChart'),{
+    type:'bar',data:{labels,datasets},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{font:{size:11}},grid:{display:false}},y:{ticks:{font:{size:11}}}}}
+  });
+}
+
+function addLoad(){
+  const name=document.getElementById('new-name').value.trim();
+  const w=parseFloat(document.getElementById('new-w').value)||0;
+  const h=parseFloat(document.getElementById('new-h').value)||0;
+  const v=parseFloat(document.getElementById('new-v').value)||120;
+  if(!name||!w||!h){alert('Completa nombre, potencia y horas.');return;}
+  loads.push({name,w,h,v});
+  ['new-name','new-w','new-h'].forEach(id=>document.getElementById(id).value='');
+  calcAll();
+}
+
+function switchTab(t,idx){
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===idx));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  if(t==='resultados') renderResults();
+  if(t==='presupuesto') renderBudget();
+  if(t==='escenarios') renderScenarios();
+  if(t==='contacto') renderResumen();
+}
+
+async function submitForm(){
+  let valid=true;
+  [['f-nombre','err-nombre',v=>v.trim().length>1],
+   ['f-telefono','err-telefono',v=>v.trim().length>6],
+   ['f-ciudad','err-ciudad',v=>v.trim().length>2],
+   ['f-tipo','err-tipo',v=>v!=='']
+  ].forEach(([id,eid,chk])=>{
+    const el=document.getElementById(id);
+    const ok=chk(el.value);
+    el.classList.toggle('error',!ok);
+    document.getElementById(eid).style.display=ok?'none':'block';
+    if(!ok) valid=false;
+  });
+  const term=document.getElementById('f-terminos');
+  const termErr=document.getElementById('err-terminos');
+  if(!term.checked){termErr.style.display='block';valid=false;}
+  else termErr.style.display='none';
+  if(!valid) return;
+
+  const R=calcSystem(loads);
+  const B=calcBudget(R);
+
+  const payload={
+    nombre:    document.getElementById('f-nombre').value.trim(),
+    telefono:  document.getElementById('f-telefono').value.trim(),
+    email:     document.getElementById('f-email').value.trim(),
+    ciudad:    document.getElementById('f-ciudad').value.trim(),
+    direccion: document.getElementById('f-direccion').value.trim(),
+    tipoInstal:document.getElementById('f-tipo').value,
+    tienePlanta:document.getElementById('f-planta').value,
+    numEquipos: loads.length,
+    consumoKwh: parseFloat(R.Ed.toFixed(2)),
+    numPaneles: R.nPanels,
+    bateriasKwh:parseFloat(R.CbatKwh.toFixed(1)),
+    totalUSD:   Math.round(B.total),
+  };
+
+  const btn=document.getElementById('submit-btn');
+  btn.innerHTML='<span class="spinner"></span>Enviando…';
+  btn.disabled=true;
+
+  try{
+    const res=await fetch(SCRIPT_URL,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    const cotId='COT-'+Date.now().toString().slice(-4);
+    lastCotId=cotId;
+    document.getElementById('cot-id-display').textContent=cotId;
+    document.getElementById('form-view').style.display='none';
+    document.getElementById('success-view').style.display='block';
+  }catch(err){
+    alert('Ocurrió un error al enviar. Verifica tu conexión e intenta de nuevo.');
+    btn.innerHTML='Enviar solicitud';
+    btn.disabled=false;
+  }
+}
+
+function openWhatsApp(){
+  const nombre=document.getElementById('f-nombre')?.value||'Cliente';
+  const R=calcSystem(loads);
+  const B=calcBudget(R);
+  const msg=`Hola, soy *${nombre}* y acabo de enviar una solicitud de cotización (${lastCotId}) a través de SolarPro.\n\n`+
+    `*Resumen de mi estimación:*\n`+
+    `• Equipos: ${loads.length} · Consumo: ${R.Ed.toFixed(1)} kWh/día\n`+
+    `• Paneles: ${R.nPanels} × ${R.pWp}Wp = ${R.Ptotal.toFixed(2)} kWp\n`+
+    `• Baterías: ${R.CbatKwh.toFixed(1)} kWh · ${R.nRacks} racks\n`+
+    `• Inversor: ≥${Math.ceil(R.Pinv*10)/10} kW\n`+
+    `• *Inversión estimada: $${Math.round(B.total).toLocaleString()} USD*\n\n`+
+    `Quedo a la espera de su propuesta formal. ¡Gracias!`;
+  window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`,'_blank');
+}
+
+function reiniciar(){
+  document.getElementById('form-view').style.display='block';
+  document.getElementById('success-view').style.display='none';
+  switchTab('cargas',0);
+}
+
+calcAll();
+</script>
+</body>
+</html>
